@@ -16,7 +16,6 @@ class Transaction:
         self.sender_id = sender_id
         self.receiver_id = receiver_id
         self.signature = signature
-        self.proof_of_work = None
 
     def to_dict(self):
         return {
@@ -25,7 +24,6 @@ class Transaction:
             'sender_id': self.sender_id,
             'receiver_id': self.receiver_id,
             'signature': base64.b64encode(self.signature).decode('utf-8') if self.signature else None,
-            'proof_of_work': self.proof_of_work
         }
 
     @staticmethod
@@ -34,7 +32,7 @@ class Transaction:
         return Transaction(data['transaction_id'], data['amount'], data['sender_id'], data['receiver_id'], signature)
 
 class Block:
-    def __init__(self, index, previous_hash, transactions, nonce, merkle_root, current_hash):
+    def __init__(self, index, previous_hash, transactions, nonce, merkle_root, current_hash, proof_of_work):
         self.index = index
         self.timestamp = time.time()
         self.previous_hash = previous_hash
@@ -42,6 +40,8 @@ class Block:
         self.nonce = nonce
         self.merkle_root = merkle_root
         self.hash = current_hash
+        self.proof_of_work = proof_of_work
+        
 
     def to_dict(self):
         return {
@@ -51,7 +51,8 @@ class Block:
             'transactions': [tx.to_dict() for tx in self.transactions],
             'nonce': self.nonce,
             'merkle_root': self.merkle_root,
-            'hash': self.hash
+            'hash': self.hash,
+            'proof_of_work': self.proof_of_work
         }
 
 class Blockchain:
@@ -61,7 +62,7 @@ class Blockchain:
         self.create_genesis_block()
 
     def create_genesis_block(self):
-        genesis_block = Block(0, '0' * 128, [], 0, '', '0' * 128)
+        genesis_block = Block(0, '0' * 128, [], 0, '', '0' * 128, '')
         self.chain.append(genesis_block)
 
     def add_transaction(self, transaction):
@@ -78,12 +79,9 @@ class Blockchain:
         
         merkle_root = self.calculate_merkle_root(transactions)
         nonce, proof_of_work = self.proof_of_work(merkle_root, transactions)
-        
-        for tx in transactions:
-            tx.proof_of_work = proof_of_work
-
+                
         current_hash = self.calculate_hash(index, previous_hash, transactions, nonce, merkle_root)
-        new_block = Block(index, previous_hash, transactions, nonce, merkle_root, current_hash)
+        new_block = Block(index, previous_hash, transactions, nonce, merkle_root, current_hash, proof_of_work)
         
         self.chain.append(new_block)
         return new_block
@@ -156,7 +154,7 @@ blockchain = Blockchain()
 
 Acafeteria_id = uuid.uuid4().hex
 # Crear 16 transacciones y añadirlas al blockchain
-for i in range(1, 17):
+for i in range(1, 80):
     private_key, public_key = create_rsa_keys()
     student_id = uuid.uuid4().hex
     cafeteria_id = Acafeteria_id
@@ -183,7 +181,7 @@ for i in range(1, 17):
 
 # Imprimir toda la cadena de bloques
 for block in blockchain.chain:
-    print(json.dumps(block.to_dict(), indent=4))
+    print(json.dumps(block.to_dict(), indent=4)) 
 
 
 def exchange_cripto_to_COP(cripto_balance):
